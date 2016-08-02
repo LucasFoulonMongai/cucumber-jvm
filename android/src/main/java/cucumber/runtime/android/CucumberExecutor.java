@@ -3,6 +3,7 @@ package cucumber.runtime.android;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.util.Log;
+
 import cucumber.api.CucumberOptions;
 import cucumber.api.StepDefinitionReporter;
 import cucumber.runtime.Backend;
@@ -85,7 +86,7 @@ public class CucumberExecutor {
         this.instrumentation = instrumentation;
         this.classLoader = context.getClassLoader();
         this.classFinder = createDexClassFinder(context);
-        this.runtimeOptions = createRuntimeOptions(context);
+        this.runtimeOptions = createRuntimeOptions(context, arguments.);
 
         ResourceLoader resourceLoader = new AndroidResourceLoader(context);
         this.runtime = new Runtime(resourceLoader, classLoader, createBackends(), runtimeOptions);
@@ -144,16 +145,23 @@ public class CucumberExecutor {
         }
     }
 
-    private RuntimeOptions createRuntimeOptions(final Context context) {
-        for (final Class<?> clazz : classFinder.getDescendants(Object.class, context.getPackageName())) {
+    private RuntimeOptions createRuntimeOptions(Context context, String packageName) {
+        Iterator var2 = this.classFinder.getDescendants(Object.class, packageName == null ? context.getPackageName() : packageName).iterator();
+
+        List<Class> clazzList = new ArrayList<>();
+        while (var2.hasNext()) {
+            Class clazz = ((Class) var2.next());
             if (clazz.isAnnotationPresent(CucumberOptions.class)) {
-                Log.d(TAG, "Found CucumberOptions in class " + clazz.getName());
-                final RuntimeOptionsFactory factory = new RuntimeOptionsFactory(clazz);
-                return factory.create();
+                clazzList.add(clazz);
+                Log.d("cucumber-android", "Found CucumberOptions in " + clazz.getName());
             }
         }
+        if (clazzList.isEmpty()) {
+            throw new CucumberException("No CucumberOptions annotation");
+        }
 
-        throw new CucumberException("No CucumberOptions annotation");
+        Log.d("cucumber-android", "Found CucumberOptions in " + clazzList.size() + " class(es)");
+        return new RuntimeOptionsFactory(clazzList).create();
     }
 
     private Collection<? extends Backend> createBackends() {

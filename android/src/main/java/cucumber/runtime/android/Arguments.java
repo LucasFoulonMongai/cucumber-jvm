@@ -31,6 +31,7 @@ public class Arguments {
     private final boolean coverageEnabled;
     private final String coverageDataFilePath;
     private final String cucumberOptions;
+    private final String cucumberOptionsPackage;
 
     /**
      * Constructs a new instance with arguments extracted from the given {@code bundle}.
@@ -43,6 +44,7 @@ public class Arguments {
         coverageEnabled = getBooleanArgument(bundle, KEY.COVERAGE_ENABLED);
         coverageDataFilePath = getStringArgument(bundle, KEY.COVERAGE_DATA_FILE_PATH, DEFAULT.COVERAGE_DATA_FILE_PATH);
         cucumberOptions = getCucumberOptionsString(bundle);
+        cucumberOptionsPackage = getCucumberOptionsPackageString(bundle);
     }
 
     /**
@@ -132,7 +134,7 @@ public class Arguments {
 
     /**
      * Returns a Cucumber options compatible string based on the argument extras found.
-     * <p/>
+     * <p>
      * The bundle <em>cannot</em> contain multiple entries for the same key,
      * however certain Cucumber options can be passed multiple times (e.g.
      * {@code --tags}). The solution is to pass values separated by
@@ -191,5 +193,13 @@ public class Arguments {
         // has been added before adding any feature references
         appendOption(sb, "", features);
         return sb.toString();
+    }
+
+
+    private String getCucumberOptionsString(final Bundle bundle) {
+        if (bundle == null) {
+            return null
+        }
+        return bundle.getString("package");
     }
 }
